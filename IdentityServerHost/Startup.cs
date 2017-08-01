@@ -13,6 +13,8 @@ using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using IdentityServerHost.Data;
+using IdentityServerHost.Services;
 
 
 namespace IdentityServerHost
@@ -37,14 +39,25 @@ namespace IdentityServerHost
                 //.AddInMemoryIdentityResources(Config.GetIdentityResources())
                 //.AddInMemoryApiResources(Config.GetApiResources())
                 //.AddInMemoryClients(Config.GetClients())
-                .AddTestUsers(Config.GetUsers())
+                //.AddTestUsers(Config.GetUsers())
                 .AddConfigurationStore(builder =>
                     builder.UseSqlServer(connectionString, options =>
                         options.MigrationsAssembly(migrationsAssembly)))
                 .AddOperationalStore(builder =>
                     builder.UseSqlServer(connectionString, options =>
                         options.MigrationsAssembly(migrationsAssembly)));
-          
+
+            idsrvBuilder.AddResourceOwnerValidator<ResourceOwnerPasswordValidator>();
+            idsrvBuilder.AddProfileService<ProfileService>();
+
+            services.AddDbContext<UserDbContext>(
+                builder =>
+                    builder.UseSqlServer(connectionString,
+                        options => options.MigrationsAssembly(migrationsAssembly)));
+
+            services.AddScoped<UserRepository>();
+            services.AddScoped<UserStore>();
+
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)

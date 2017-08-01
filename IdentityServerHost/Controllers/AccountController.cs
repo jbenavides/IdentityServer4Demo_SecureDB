@@ -15,6 +15,7 @@ using IdentityServer4.Services;
 using IdentityServer4.Stores;
 using IdentityServer4.Test;
 using IdentityServerHost.Models;
+using IdentityServerHost.Services;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,12 +28,12 @@ namespace IdentityServerHost.Controllers
     /// </summary>
     public class AccountController : Controller
     {
-        private readonly TestUserStore _testUserStore;
+        private readonly UserStore _testUserStore;
         private readonly IIdentityServerInteractionService _interaction;
         private readonly IClientStore _clientStore;
 
         public AccountController(
-            TestUserStore testUserStore,
+            UserStore testUserStore,
             IIdentityServerInteractionService interaction,
             IClientStore clientStore)
         {
@@ -75,10 +76,10 @@ namespace IdentityServerHost.Controllers
             if (ModelState.IsValid)
             {
                 // validate username/password against in-memory store
-                if (_testUserStore.ValidateCredentials(model.Username, model.Password))
+                if (await _testUserStore.ValidateCredentials(model.Username, model.Password))
                 {
                     // issue authentication cookie with subject ID and username
-                    var user = _testUserStore.FindByUsername(model.Username);
+                    var user = await _testUserStore.FindByUsername(model.Username);
 
                     AuthenticationProperties props = null;
                     // only set explicit expiration here if persistent. 
@@ -91,7 +92,7 @@ namespace IdentityServerHost.Controllers
                             ExpiresUtc = DateTimeOffset.UtcNow.AddMonths(1)
                         };
                     };
-                    await HttpContext.Authentication.SignInAsync(user.SubjectId, user.Username, props);
+                    await HttpContext.Authentication.SignInAsync(user.SubjectId.ToString(), user.UserName, props);
 
                     // make sure the returnUrl is still valid, and if yes - redirect back to authorize endpoint
                     if (_interaction.IsValidReturnUrl(model.ReturnUrl))
@@ -306,7 +307,7 @@ namespace IdentityServerHost.Controllers
             }
 
             // issue authentication cookie for user
-            await HttpContext.Authentication.SignInAsync(user.SubjectId, user.Username, provider, additionalClaims.ToArray());
+            await HttpContext.Authentication.SignInAsync(user.SubjectId.ToString(), user.UserName, provider, additionalClaims.ToArray());
 
             // delete temporary cookie used during external authentication
             await HttpContext.Authentication.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
