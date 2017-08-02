@@ -259,8 +259,7 @@ namespace IdentityServerHost.Controllers
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl)
         {
             // read external identity from the temporary cookie
-            var info = await HttpContext.Authentication.GetAuthenticateInfoAsync(
-                IdentityServerConstants.ExternalCookieAuthenticationScheme);
+            var info = await HttpContext.Authentication.GetAuthenticateInfoAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             var tempUser = info?.Principal;
             if (tempUser == null)
             {
@@ -289,12 +288,12 @@ namespace IdentityServerHost.Controllers
             var userId = userIdClaim.Value;
 
             // check if the external user is already provisioned
-            var user = _testUserStore.FindByExternalProvider(provider, userId);
+            var user = await _testUserStore.FindByExternalProvider(provider, userId);
             if (user == null)
             {
                 // this sample simply auto-provisions new external user
                 // another common approach is to start a registrations workflow first
-                user = _testUserStore.AutoProvisionUser(provider, userId, claims);
+                user = await _testUserStore.AutoProvisionUser(provider, userId, claims);
             }
 
             var additionalClaims = new List<Claim>();

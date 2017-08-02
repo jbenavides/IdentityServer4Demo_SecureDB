@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using IdentityModel;
 using IdentityServer4.Models;
 using IdentityServerHost.Data;
 
@@ -36,14 +38,35 @@ namespace IdentityServerHost.Services
             return user.Password == password.Sha256();
         }
 
-        public User AutoProvisionUser(string provider, string userId, List<Claim> claims)
+        public async Task<User> AutoProvisionUser(string providerName, string providerSubjectId, List<Claim> providerClaims)
         {
-            throw new NotImplementedException();
+            //filtering some claims from the provider
+            var name = providerClaims.SingleOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            name = name ?? providerClaims.SingleOrDefault(c => c.Type == JwtClaimTypes.FamilyName)?.Value;
+            var website = providerClaims.SingleOrDefault(c => c.Type == ClaimTypes.Webpage)?.Value;
+
+            var newSubjectId = Guid.NewGuid();
+
+            var userName = name ?? newSubjectId.ToString();
+
+            var newUser = new User
+            {
+                SubjectId = newSubjectId,
+                IsActive = true,
+                UserName = userName,
+                Name = name,
+                Website = website,
+                Password = ""//password is irrelevant because the suer will use the google token service.
+            };
+
+            await userRepository.CreateUser(newUser, providerName, providerSubjectId);
+
+            return newUser;
         }
 
-        public User FindByExternalProvider(string provider, string userId)
+        public async Task<User> FindByExternalProvider(string providerName, string subjectId)
         {
-            throw new NotImplementedException();
+            return await userRepository.GetExternalProviderInfo(providerName, subjectId);
         }
     }
 }

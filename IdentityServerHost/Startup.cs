@@ -13,6 +13,7 @@ using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using IdentityServer4;
 using IdentityServerHost.Data;
 using IdentityServerHost.Services;
 
@@ -67,23 +68,24 @@ namespace IdentityServerHost
 
             app.UseIdentityServer();
 
-            //app.UseCookieAuthentication(new CookieAuthenticationOptions
-            //{
-            //    AuthenticationScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme,
+            //provide cookie support, because goole send us a cookie when user log in
+            app.UseCookieAuthentication(new CookieAuthenticationOptions
+            {
+                AuthenticationScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme,
 
-            //    AutomaticAuthenticate = false,
-            //    AutomaticChallenge = false
-            //});
+                 AutomaticAuthenticate = false,
+                 AutomaticChallenge = false
+            });
 
-            //app.UseGoogleAuthentication(new GoogleOptions
-            //{
-            //    AuthenticationScheme = "Google",
-            //    DisplayName = "Google",
-            //    SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme,
+            app.UseGoogleAuthentication(new GoogleOptions
+            {
+                AuthenticationScheme = "Google",
+                DisplayName = "Google",
+                SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme,
 
-            //    ClientId = "434483408261-55tc8n0cs4ff1fe21ea8df2o443v2iuc.apps.googleusercontent.com",
-            //    ClientSecret = "3gcoTrEDPPJ0ukn_aYYT6PWo"
-            //});
+                ClientId = "223551725666-lr78lvv9ilhfpfehhk14eg91d8rfm1el.apps.googleusercontent.com",
+                ClientSecret = "66d87CdcuVXnLZqcbX3l873v"
+            });
 
             InitializeDatabase(app);
 
